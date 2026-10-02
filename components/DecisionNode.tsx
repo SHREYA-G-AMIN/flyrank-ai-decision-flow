@@ -1,8 +1,13 @@
 "use client";
 
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import { Handle, Position, NodeProps, Node } from "@xyflow/react";
 
-export default function DecisionNode({ data }: NodeProps) {
+type DecisionNodeData = {
+  prompt?: string;
+  onChange?: (value: string) => void;
+};
+
+export default function DecisionNode({ data }: NodeProps<Node<DecisionNodeData>>) {
   return (
     <div
       style={{
@@ -20,7 +25,8 @@ export default function DecisionNode({ data }: NodeProps) {
       </div>
 
       <input
-        defaultValue={data.prompt as string}
+        value={data.prompt as string}
+        onChange={(e) => data.onChange?.(e.target.value)}
         style={{
           width: "100%",
           padding: "8px",
