@@ -61,6 +61,7 @@ export default function Page() {
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState("Ready");
   const [decision, setDecision] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
     localStorage.setItem("be09-workflow", JSON.stringify(nodes));
@@ -90,7 +91,8 @@ export default function Page() {
 
     setRunning(true);
     setDecision(null);
-    setStatus("Sending workflow to Inngest...");
+    setStatus("Running...");
+    setLogs([`Started workflow with prompt: "${prompt}"`]);
 
     try {
       const response = await fetch("/api/workflow", {
@@ -107,11 +109,21 @@ export default function Page() {
         throw new Error(result.error || "Workflow failed");
       }
 
-      setStatus("Workflow triggered successfully");
-      setDecision(null);
+      setStatus("Workflow triggered");
+      setLogs((current) => [
+        ...current,
+        "Workflow sent to Inngest.",
+        "Gemini will evaluate the decision.",
+        "Check Inngest Runs for the final YES/NO branch.",
+      ]);
     } catch (error) {
       console.error(error);
-      setStatus("Workflow failed");
+
+      setStatus("Failed");
+      setLogs((current) => [
+        ...current,
+        "Error: Failed to trigger workflow.",
+      ]);
     } finally {
       setRunning(false);
     }
@@ -121,6 +133,12 @@ export default function Page() {
     node.id === "decision"
       ? {
           ...node,
+          style:
+            decision === "YES" && node.id === "decision"
+              ? { border: "3px solid green" }
+              : decision === "NO" && node.id === "decision"
+                ? { border: "3px solid red" }
+                : undefined,
           data: {
             ...node.data,
             onChange: updatePrompt,
@@ -139,6 +157,7 @@ export default function Page() {
       markerEnd: {
         type: MarkerType.ArrowClosed,
       },
+      animated: decision === "YES",
     },
     {
       id: "no",
@@ -149,6 +168,7 @@ export default function Page() {
       markerEnd: {
         type: MarkerType.ArrowClosed,
       },
+      animated: decision === "NO",
     },
   ];
 
@@ -164,7 +184,7 @@ export default function Page() {
           padding: "16px",
           borderRadius: "12px",
           boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-          minWidth: "260px",
+          minWidth: "300px",
         }}
       >
         <h1 style={{ fontWeight: "bold", marginBottom: "10px" }}>
@@ -192,8 +212,27 @@ export default function Page() {
         </div>
 
         {decision && (
-          <div style={{ marginTop: "8px", fontSize: "14px" }}>
+          <div style={{ marginTop: "8px" }}>
             <strong>AI Decision:</strong> {decision}
+          </div>
+        )}
+
+        {logs.length > 0 && (
+          <div style={{ marginTop: "12px" }}>
+            <strong>Execution Log</strong>
+
+            {logs.map((log, index) => (
+              <div
+                key={index}
+                style={{
+                  fontSize: "12px",
+                  marginTop: "5px",
+                  color: "#555",
+                }}
+              >
+                • {log}
+              </div>
+            ))}
           </div>
         )}
       </div>
