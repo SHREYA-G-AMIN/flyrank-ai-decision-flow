@@ -1,36 +1,225 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FlyRank BE-09 — AI Decision Flow
 
-## Getting Started
+An AI-powered decision workflow editor built with **Next.js, React Flow, Inngest, and Google Gemini**.
 
-First, run the development server:
+## Overview
+
+This project allows users to visually create and edit an AI decision workflow.
+
+A decision prompt is sent to Gemini, which returns either **YES** or **NO**. Inngest executes the workflow and follows the corresponding branch.
+
+```text
+React Flow
+    ↓
+Decision Node
+    ↓
+Run Workflow
+    ↓
+Next.js API
+    ↓
+Inngest
+    ↓
+Gemini
+    ↓
+YES / NO
+   ↙     ↘
+Support  Sales
+```
+
+## Features
+
+- Visual workflow editor using React Flow
+- Editable AI decision prompts
+- YES / NO decision branches
+- Real AI decisions using Google Gemini
+- Inngest-powered workflow execution
+- Execution status and logs
+- Workflow persistence using localStorage
+- JSON workflow export
+- JSON workflow import
+- Basic error handling
+
+## Tech Stack
+
+- **Next.js** — React framework
+- **TypeScript** — Type-safe development
+- **React Flow** — Visual workflow editor
+- **Inngest** — Durable workflow execution
+- **Google Gemini** — AI decision engine
+- **Tailwind CSS** — Styling
+
+## Project Structure
+
+```text
+flyrank-ai-decision-flow/
+│
+├── app/
+│   ├── api/
+│   │   ├── decision/
+│   │   │   └── route.ts
+│   │   ├── inngest/
+│   │   │   └── route.ts
+│   │   └── workflow/
+│   │       └── route.ts
+│   │
+│   └── page.tsx
+│
+├── components/
+│   └── DecisionNode.tsx
+│
+├── lib/
+│   ├── gemini.ts
+│   └── inngest/
+│       ├── client.ts
+│       └── functions.ts
+│
+├── public/
+├── .env.local
+├── package.json
+└── README.md
+```
+
+## Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+INNGEST_DEV=1
+```
+
+Keep `.env.local` private and never commit your API key to GitHub.
+
+## Installation
+
+Install the project dependencies:
+
+```bash
+npm install
+```
+
+## Running the Project
+
+### Start Next.js
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be available at:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Start Inngest
 
-## Learn More
+Open another terminal and run:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:3000/api/inngest
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The Inngest development dashboard will be available at:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+http://localhost:8288
+```
 
-## Deploy on Vercel
+## Using the Application
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Open the application at `http://localhost:3000`.
+2. Edit the prompt inside the AI Decision node.
+3. Click **Run Workflow**.
+4. The workflow is sent to Inngest.
+5. Inngest executes the AI decision step.
+6. Gemini evaluates the prompt.
+7. Gemini returns `YES` or `NO`.
+8. The workflow follows the corresponding branch.
+9. Execution details can be viewed in the Inngest dashboard.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Example
+
+Decision prompt:
+
+```text
+Is this a support request?
+```
+
+Gemini may return:
+
+```text
+YES
+```
+
+The workflow follows:
+
+```text
+AI Decision
+     ↓
+    YES
+     ↓
+  Support
+```
+
+For a decision returning `NO`:
+
+```text
+AI Decision
+     ↓
+     NO
+     ↓
+   Sales
+```
+
+## Workflow Persistence
+
+The current workflow is stored in the browser using `localStorage`.
+
+This means edited prompts remain available after refreshing the page.
+
+Workflows can also be:
+
+- Exported as JSON
+- Imported from JSON
+
+## Inngest Workflow
+
+The main Inngest workflow is:
+
+```text
+workflow/decision
+        ↓
+decision-workflow
+        ↓
+ai-decision
+        ↓
+Gemini
+        ↓
+follow-branch
+        ↓
+Support / Sales
+```
+
+## Assignment
+
+**Program:** FlyRank Backend AI Engineering
+
+**Assignment:** BE-09 — Build an AI Decision Flow with React Flow + Inngest
+
+**Phase:** Build+
+
+## Learning Outcomes
+
+This project demonstrates:
+
+- Building a visual workflow editor
+- Managing React state
+- Persisting frontend state with localStorage
+- Creating API routes with Next.js
+- Integrating an external LLM
+- Using Gemini for structured AI decisions
+- Creating event-driven workflows with Inngest
+- Implementing conditional workflow branching
+- Tracking workflow execution
+- Importing and exporting workflow data
