@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -16,36 +16,55 @@ const nodeTypes = {
   decision: DecisionNode,
 };
 
-type FlowNodeData = {
+type WorkflowNode = Node<{
   prompt?: string;
   label?: string;
   onChange?: (value: string) => void;
-};
+}>;
 
-type FlowNode = Node<FlowNodeData>;
+const initialNodes: WorkflowNode[] = [
+  {
+    id: "decision",
+    type: "decision",
+    position: { x: 300, y: 100 },
+    data: {
+      prompt: "Is this a support request?",
+    },
+  },
+  {
+    id: "support",
+    position: { x: 100, y: 300 },
+    data: {
+      label: "Support",
+    },
+  },
+  {
+    id: "sales",
+    position: { x: 500, y: 300 },
+    data: {
+      label: "Sales",
+    },
+  },
+];
 
 export default function Page() {
-  const [nodes, setNodes] = useState<FlowNode[]>([
-    {
-      id: "decision",
-      type: "decision",
-      position: { x: 300, y: 100 },
-      data: {
-        prompt: "Is this a support request?",
-      },
-    },
-    {
-      id: "support",
-      position: { x: 100, y: 300 },
-      data: { label: "Support" },
-    },
-    {
-      id: "sales",
-      position: { x: 500, y: 300 },
-      data: { label: "Sales" },
-    },
-  ]);
+  // Load saved workflow when the app starts
+  const [nodes, setNodes] = useState<WorkflowNode[]>(() => {
+    if (typeof window === "undefined") {
+      return initialNodes;
+    }
 
+    const savedNodes = localStorage.getItem("be09-workflow");
+
+    return savedNodes ? JSON.parse(savedNodes) : initialNodes;
+  });
+
+  // Save workflow whenever nodes change
+  useEffect(() => {
+    localStorage.setItem("be09-workflow", JSON.stringify(nodes));
+  }, [nodes]);
+
+  // Update the decision prompt
   const updatePrompt = useCallback((value: string) => {
     setNodes((currentNodes) =>
       currentNodes.map((node) =>
@@ -62,6 +81,7 @@ export default function Page() {
     );
   }, []);
 
+  // Give the decision node access to updatePrompt
   const nodesWithHandlers = nodes.map((node) =>
     node.id === "decision"
       ? {
@@ -74,6 +94,7 @@ export default function Page() {
       : node
   );
 
+  // YES and NO connections
   const edges = [
     {
       id: "yes",
@@ -81,7 +102,9 @@ export default function Page() {
       sourceHandle: "yes",
       target: "support",
       label: "YES",
-      markerEnd: { type: MarkerType.ArrowClosed },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
     },
     {
       id: "no",
@@ -89,7 +112,9 @@ export default function Page() {
       sourceHandle: "no",
       target: "sales",
       label: "NO",
-      markerEnd: { type: MarkerType.ArrowClosed },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+      },
     },
   ];
 
