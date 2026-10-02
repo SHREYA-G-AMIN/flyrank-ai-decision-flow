@@ -49,18 +49,14 @@ const initialNodes: WorkflowNode[] = [
 
 export default function Page() {
   const [nodes, setNodes] = useState<WorkflowNode[]>(() => {
-    if (typeof window === "undefined") {
-      return initialNodes;
-    }
+    if (typeof window === "undefined") return initialNodes;
 
     const savedNodes = localStorage.getItem("be09-workflow");
-
     return savedNodes ? JSON.parse(savedNodes) : initialNodes;
   });
 
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState("Ready");
-  const [decision, setDecision] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
@@ -90,9 +86,8 @@ export default function Page() {
     if (!prompt) return;
 
     setRunning(true);
-    setDecision(null);
     setStatus("Running...");
-    setLogs([`Started workflow with prompt: "${prompt}"`]);
+    setLogs([`Started: "${prompt}"`]);
 
     try {
       const response = await fetch("/api/workflow", {
@@ -112,33 +107,62 @@ export default function Page() {
       setStatus("Workflow triggered");
       setLogs((current) => [
         ...current,
-        "Workflow sent to Inngest.",
-        "Gemini will evaluate the decision.",
-        "Check Inngest Runs for the final YES/NO branch.",
+        "Sent to Inngest",
+        "Gemini decision step started",
+        "YES/NO branch will be selected by the workflow",
       ]);
     } catch (error) {
       console.error(error);
-
       setStatus("Failed");
       setLogs((current) => [
         ...current,
-        "Error: Failed to trigger workflow.",
+        "Failed to trigger workflow",
       ]);
     } finally {
       setRunning(false);
     }
   };
 
+  const exportWorkflow = () => {
+    const blob = new Blob([JSON.stringify(nodes, null, 2)], {
+      type: "application/json",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "be09-workflow.json";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  const importWorkflow = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const importedNodes = JSON.parse(reader.result as string);
+        setNodes(importedNodes);
+        setStatus("Workflow imported");
+        setLogs((current) => [...current, "Workflow imported from JSON"]);
+      } catch {
+        setStatus("Invalid workflow file");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
   const nodesWithHandlers = nodes.map((node) =>
     node.id === "decision"
       ? {
           ...node,
-          style:
-            decision === "YES" && node.id === "decision"
-              ? { border: "3px solid green" }
-              : decision === "NO" && node.id === "decision"
-                ? { border: "3px solid red" }
-                : undefined,
           data: {
             ...node.data,
             onChange: updatePrompt,
@@ -157,7 +181,6 @@ export default function Page() {
       markerEnd: {
         type: MarkerType.ArrowClosed,
       },
-      animated: decision === "YES",
     },
     {
       id: "no",
@@ -168,7 +191,6 @@ export default function Page() {
       markerEnd: {
         type: MarkerType.ArrowClosed,
       },
-      animated: decision === "NO",
     },
   ];
 
@@ -200,22 +222,46 @@ export default function Page() {
             borderRadius: "8px",
             background: running ? "#999" : "#111",
             color: "white",
-            cursor: running ? "not-allowed" : "pointer",
-            marginBottom: "10px",
+            marginBottom: "8px",
           }}
         >
           {running ? "Running..." : "Run Workflow"}
         </button>
 
-        <div style={{ fontSize: "14px" }}>
+        <button
+          onClick={exportWorkflow}
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: "8px",
+            marginBottom: "8px",
+          }}
+        >
+          Export JSON
+        </button>
+
+        <label
+          style={{
+            display: "block",
+            padding: "8px",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            textAlign: "center",
+            cursor: "pointer",
+          }}
+        >
+          Import JSON
+          <input
+            type="file"
+            accept=".json"
+            onChange={importWorkflow}
+            style={{ display: "none" }}
+          />
+        </label>
+
+        <div style={{ marginTop: "12px", fontSize: "14px" }}>
           <strong>Status:</strong> {status}
         </div>
-
-        {decision && (
-          <div style={{ marginTop: "8px" }}>
-            <strong>AI Decision:</strong> {decision}
-          </div>
-        )}
 
         {logs.length > 0 && (
           <div style={{ marginTop: "12px" }}>
