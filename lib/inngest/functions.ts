@@ -1,15 +1,26 @@
 import { inngest } from "./client";
+import { getAIDecision } from "@/lib/gemini";
 
-export const testWorkflow = inngest.createFunction(
-  { id: "test-workflow", triggers: [{ event: "workflow/test" }] },
+export const decisionWorkflow = inngest.createFunction(
+  {
+    id: "decision-workflow",
+    triggers: {
+      event: "workflow/decision",
+    },
+  },
   async ({ event, step }) => {
-    const result = await step.run("test-step", async () => {
-      return {
-        message: "Inngest is working!",
-        input: event.data,
-      };
+    const decision = await step.run("ai-decision", async () => {
+      return await getAIDecision(event.data.prompt);
     });
 
-    return result;
+    const nextNode = await step.run("follow-branch", async () => {
+      return decision === "YES" ? "Support" : "Sales";
+    });
+
+    return {
+      prompt: event.data.prompt,
+      decision,
+      nextNode,
+    };
   }
 );
